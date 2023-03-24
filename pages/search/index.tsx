@@ -19,6 +19,7 @@ import TopButton from "@/components/button/TopButton";
 import { GrRotateLeft } from "react-icons/gr";
 import SearchTextBar from "@/components/searchPage/SearchTextBar";
 import Seo from "../../components/layout/Seo";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 const SearchData: NextPage = () => {
     const router = useRouter();
@@ -29,7 +30,6 @@ const SearchData: NextPage = () => {
     const [filteredTime, setFilteredTime] = useState<string[]>([]);
     const [currentItems, setCurrentItems] = useState<TypeRecipe[]>([]);
     const [totalItems, setTotalItems] = useState<TypeRecipe[]>([]);
-    const [lastDoc, setLastdoc] = useState(0);
 
     // 인기순
     const activeBestBtn = () => {
@@ -59,20 +59,10 @@ const SearchData: NextPage = () => {
             id: doc.id,
         }));
         setTotalItems(newData);
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        lastDoc ? setLastdoc(lastDoc as any) : null;
-    };
-    const updateState = (querySnapshot: any) => {
-        const newData = querySnapshot.docs.map((doc: any) => ({
-            ...doc.data(),
-            id: doc.id,
-        }));
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        setTotalItems((prev) => [...prev, ...newData]);
-        setLastdoc(lastDoc);
+        return querySnapshot;
     };
     // 더보기event
-    const next = async () => {
+    const next = async (pageParam: number) => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
@@ -80,13 +70,33 @@ const SearchData: NextPage = () => {
                     isBest === "viewCount" ? "viewCount" : "createdAt",
                     "desc"
                 ),
-                startAfter(lastDoc),
+                startAfter(pageParam),
                 limit(6)
             )
         );
-        updateState(querySnapshot);
+        const newData = querySnapshot.docs.map((doc: any) => ({
+            ...doc.data(),
+            id: doc.id,
+        }));
+        setTotalItems((prev) => [...prev, ...newData]);
+        return querySnapshot;
     };
-    // 전체목록불러오기
+    // InfiniteQuery
+    const { fetchNextPage, hasNextPage } = useInfiniteQuery(
+        ["infiniteRecipe"],
+        async ({ pageParam }) => await (pageParam ? next(pageParam) : first()),
+        {
+            getNextPageParam: (querySnapshot) => {
+                const lastPageParam =
+                    querySnapshot.docs[querySnapshot.docs.length - 1];
+                if (querySnapshot.size < 6) {
+                    return undefined;
+                }
+                return lastPageParam;
+            },
+        }
+    );
+    // 전체목록불러오기;
     const getList = async () => {
         const items = query(
             collection(dbService, "recipe"),
@@ -186,7 +196,6 @@ const SearchData: NextPage = () => {
         storeFilteredFood && setFilteredFood(storeFilteredFood);
         storeFilteredTime && setFilteredTime(storeFilteredTime);
         !storeSearchText && setText("");
-        first();
         getList();
     }, [isBest]);
 
@@ -230,14 +239,14 @@ const SearchData: NextPage = () => {
                     <div className="w-full grid mx-auto sm:mx-0 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-9 relative pb-24">
                         <RecipeList
                             text={text}
-                            next={next}
-                            lastDoc={lastDoc}
                             currentItems={currentItems}
                             totalItems={totalItems}
                             dataResults={dataResults}
                             filteredFood={filteredFood}
                             filteredTime={filteredTime}
                             isBest={isBest}
+                            fetchNextPage={fetchNextPage}
+                            hasNextPage={hasNextPage}
                         />
                     </div>
                 </div>

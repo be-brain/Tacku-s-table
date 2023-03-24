@@ -15,6 +15,34 @@ declare global {
         children?: JSX.Element | JSX.Element[];
         viewCount?: number;
     }
+    interface TypeShowPw {
+        showPw: boolean;
+        setShowPw: (showPw: boolean) => void;
+    }
+    interface TypeShowPwConfirm {
+        showPwConfirm: boolean;
+        setShowPwConfirm: (showPwConfirm: boolean) => void;
+    }
+    interface TypeSearchTextProps {
+        text?: string;
+        setText: (text: string) => void;
+    }
+    interface TypeSearchPageProps {
+        next?: () => void;
+        lastDoc?: number;
+        text?: string;
+        setText?: string;
+        totalItems?: TypeRecipe[];
+        currentItems?: TypeRecipe[];
+        dataResults?: TypeRecipe[];
+        isBest?: string;
+        activeBestBtn?: () => void;
+        inactiveBestBtn?: () => void;
+        filteredFood?: string[];
+        filteredTime?: string[];
+        fetchNextPage?: () => void;
+        hasNextPage?: boolean;
+    }
     interface TBookmark {
         postId?: string;
         writerUid?: string;
@@ -58,32 +86,6 @@ declare global {
     }
     interface MyTabProp {
         userInfo: TUserInfo | undefined;
-    }
-    interface TypeShowPw {
-        showPw: boolean;
-        setShowPw: (showPw: boolean) => void;
-    }
-    interface TypeShowPwConfirm {
-        showPwConfirm: boolean;
-        setShowPwConfirm: (showPwConfirm: boolean) => void;
-    }
-    interface TypeSearchTextProps {
-        text?: string;
-        setText: (text: string) => void;
-    }
-    interface TypeSearchPageProps {
-        next?: () => void;
-        lastDoc?: number;
-        text?: string;
-        setText?: string;
-        totalItems?: TypeRecipe[];
-        currentItems?: TypeRecipe[];
-        dataResults?: TypeRecipe[];
-        isBest?: string;
-        activeBestBtn?: () => void;
-        inactiveBestBtn?: () => void;
-        filteredFood?: string[];
-        filteredTime?: string[];
     }
     interface targetWholeDataType {
         animationTitle: string;
