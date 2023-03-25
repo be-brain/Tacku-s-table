@@ -82,21 +82,25 @@ const SearchData: NextPage = () => {
         return querySnapshot;
     };
     // InfiniteQuery
-    const { fetchNextPage, hasNextPage } = useInfiniteQuery(
-        ["infiniteRecipe"],
-        async ({ pageParam }) => await (pageParam ? next(pageParam) : first()),
-        {
-            getNextPageParam: (querySnapshot) => {
-                const lastPageParam =
-                    querySnapshot.docs[querySnapshot.docs.length - 1];
-                if (querySnapshot.size < 6) {
-                    return undefined;
-                }
-                return lastPageParam;
-            },
-        }
-    );
-    // 전체목록불러오기;
+    const { isLoading, isError, error, fetchNextPage, hasNextPage } =
+        useInfiniteQuery<any, Error>(
+            ["infiniteRecipe"],
+            async ({ pageParam }) =>
+                await (pageParam ? next(pageParam) : first()),
+            {
+                getNextPageParam: (querySnapshot) => {
+                    const lastPageParam =
+                        querySnapshot.docs[querySnapshot.docs.length - 1];
+                    if (querySnapshot.size < 6) {
+                        return undefined;
+                    }
+                    return lastPageParam;
+                },
+                staleTime: 3 * 1000,
+                refetchOnWindowFocus: false,
+            }
+        );
+    // 전체목록불러오기
     const getList = async () => {
         const items = query(
             collection(dbService, "recipe"),
@@ -199,6 +203,14 @@ const SearchData: NextPage = () => {
         getList();
     }, [isBest]);
 
+    if (isLoading) {
+        return <span>Loading...</span>;
+    }
+
+    if (isError) {
+        return <span>Error : {error.message}</span>;
+    }
+
     return (
         <>
             <div className="w-full flex flex-col justify-center items-center">
@@ -236,7 +248,7 @@ const SearchData: NextPage = () => {
                             선택초기화<GrRotateLeft></GrRotateLeft>
                         </button>
                     </div>
-                    <div className="w-full grid mx-auto sm:mx-0 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-9 relative pb-24">
+                    <div className="w-full">
                         <RecipeList
                             text={text}
                             currentItems={currentItems}

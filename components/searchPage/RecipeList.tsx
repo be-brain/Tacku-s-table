@@ -76,10 +76,27 @@ const RecipeList = ({
                     loadMore={() => fetchNextPage?.()}
                     hasMore={hasNextPage}
                     loader={<div key={0}>Loading ...</div>}
+                    className="w-full grid mx-auto sm:mx-0 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-9 relative pb-24"
                 >
-                    {totalItems.map((item) => {
-                        return <RecipeListData key={item.id} item={item} />;
-                    })}
+                    {isBest === "viewCount"
+                        ? totalItems
+                              .sort(
+                                  (a: TypeRecipe, b: TypeRecipe) =>
+                                      b.viewCount! - a.viewCount!
+                              )
+                              .map((item) => {
+                                  return (
+                                      <RecipeListData
+                                          key={item.id}
+                                          item={item}
+                                      />
+                                  );
+                              })
+                        : totalItems.map((item) => {
+                              return (
+                                  <RecipeListData key={item.id} item={item} />
+                              );
+                          })}
                 </InfiniteScroll>
             ) : (
                 <div className="flex flex-col items-center font-medium text-[#eea546]">
