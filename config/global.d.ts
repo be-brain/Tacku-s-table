@@ -35,7 +35,7 @@ declare global {
         totalItems?: TypeRecipe[];
         currentItems?: TypeRecipe[];
         dataResults?: TypeRecipe[];
-        isBest?: string;
+        isBest?: boolean;
         activeBestBtn?: () => void;
         inactiveBestBtn?: () => void;
         filteredFood?: string[];
