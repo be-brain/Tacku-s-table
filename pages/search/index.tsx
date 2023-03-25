@@ -25,7 +25,7 @@ const SearchData: NextPage = () => {
     const router = useRouter();
     const deliverKeyword = router.query.keyword;
     const [text, setText] = useState(deliverKeyword?.toString() || "");
-    const [isBest, setIsBest] = useState("");
+    const [isBest, setIsBest] = useState(false);
     const [filteredFood, setFilteredFood] = useState<string[]>([]);
     const [filteredTime, setFilteredTime] = useState<string[]>([]);
     const [currentItems, setCurrentItems] = useState<TypeRecipe[]>([]);
@@ -34,23 +34,20 @@ const SearchData: NextPage = () => {
     // 인기순
     const activeBestBtn = () => {
         sessionStorage.setItem("userWatching", "viewCount");
-        setIsBest("viewCount");
+        setIsBest(true);
     };
 
     // 최신순
     const inactiveBestBtn = () => {
         sessionStorage.setItem("userWatching", "createdAt");
-        setIsBest("createdAt");
+        setIsBest(false);
     };
     // 전체목록(6개씩)
     const first = async () => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
-                orderBy(
-                    isBest === "viewCount" ? "viewCount" : "createdAt",
-                    "desc"
-                ),
+                orderBy(isBest ? "viewCount" : "createdAt", "desc"),
                 limit(6)
             )
         );
@@ -66,10 +63,7 @@ const SearchData: NextPage = () => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
-                orderBy(
-                    isBest === "viewCount" ? "viewCount" : "createdAt",
-                    "desc"
-                ),
+                orderBy(isBest ? "viewCount" : "createdAt", "desc"),
                 startAfter(pageParam),
                 limit(6)
             )
@@ -82,9 +76,9 @@ const SearchData: NextPage = () => {
         return querySnapshot;
     };
     // InfiniteQuery
-    const { isLoading, isError, error, fetchNextPage, hasNextPage } =
+    const { isLoading, isError, error, fetchNextPage, hasNextPage, refetch } =
         useInfiniteQuery<any, Error>(
-            ["infiniteRecipe"],
+            ["infiniteRecipe", isBest],
             async ({ pageParam }) =>
                 await (pageParam ? next(pageParam) : first()),
             {
@@ -96,7 +90,6 @@ const SearchData: NextPage = () => {
                     }
                     return lastPageParam;
                 },
-                staleTime: 3 * 1000,
                 refetchOnWindowFocus: false,
             }
         );
@@ -104,7 +97,7 @@ const SearchData: NextPage = () => {
     const getList = async () => {
         const items = query(
             collection(dbService, "recipe"),
-            orderBy(isBest === "viewCount" ? "viewCount" : "createdAt", "desc")
+            orderBy(isBest ? "viewCount" : "createdAt", "desc")
         );
         const querySnapshot = await getDocs(items);
         const newData = querySnapshot.docs.map((doc) => ({
@@ -195,7 +188,11 @@ const SearchData: NextPage = () => {
         const storeFilteredTime = JSON.parse(
             sessionStorage.getItem("filteredTimeData")!
         );
-        result && setIsBest(result);
+        if (result === "viewCount") {
+            setIsBest(true);
+        } else {
+            setIsBest(false);
+        }
         storeSearchText && setText(storeSearchText);
         storeFilteredFood && setFilteredFood(storeFilteredFood);
         storeFilteredTime && setFilteredTime(storeFilteredTime);
