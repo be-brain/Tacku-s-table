@@ -1,19 +1,19 @@
 import Image from "next/image";
 import RecipeListData from "./RecipeListData";
 import logo from "../../public/images/logo2-2.png";
-import { cls } from "@/util";
+import InfiniteScroll from "react-infinite-scroller";
 
 // 전체레시피불러오기
 const RecipeList = ({
-    next,
     text,
-    lastDoc,
     currentItems,
     totalItems,
     dataResults,
     filteredFood,
     filteredTime,
     isBest,
+    fetchNextPage,
+    hasNextPage,
 }: TypeSearchPageProps) => {
     // dataResults = 검색결과
     // currentItems = 전체레시피(총)
@@ -72,9 +72,32 @@ const RecipeList = ({
                     })
                 )
             ) : totalItems?.length ? (
-                totalItems.map((item) => {
-                    return <RecipeListData key={item.id} item={item} />;
-                })
+                <InfiniteScroll
+                    loadMore={() => fetchNextPage?.()}
+                    hasMore={hasNextPage}
+                    loader={<div key={0}>Loading ...</div>}
+                    className="w-full grid mx-auto sm:mx-0 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-9 relative pb-24"
+                >
+                    {isBest === "viewCount"
+                        ? totalItems
+                              .sort(
+                                  (a: TypeRecipe, b: TypeRecipe) =>
+                                      b.viewCount! - a.viewCount!
+                              )
+                              .map((item) => {
+                                  return (
+                                      <RecipeListData
+                                          key={item.id}
+                                          item={item}
+                                      />
+                                  );
+                              })
+                        : totalItems.map((item) => {
+                              return (
+                                  <RecipeListData key={item.id} item={item} />
+                              );
+                          })}
+                </InfiniteScroll>
             ) : (
                 <div className="flex flex-col items-center font-medium text-[#eea546]">
                     <Image
@@ -86,23 +109,6 @@ const RecipeList = ({
                     <p className="pt-4">게시물이 존재하지 않습니다</p>
                 </div>
             )}
-            <button
-                type="button"
-                onClick={next}
-                className={cls(
-                    "border-1 text-brand100 border-brand100 px-7 py-1 absolute bottom-0 -translate-x-1/2 left-1/2",
-                    !lastDoc ||
-                        text ||
-                        filteredFood?.length ||
-                        filteredTime?.length ||
-                        !currentItems?.length ||
-                        (currentItems || dataResults).length < 6
-                        ? "hidden"
-                        : ""
-                )}
-            >
-                더보기
-            </button>
         </>
     );
 };
