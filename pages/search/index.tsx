@@ -42,13 +42,13 @@ const SearchData: NextPage = () => {
         sessionStorage.setItem("userWatching", "createdAt");
         setIsBest(false);
     };
-    // 전체목록(6개씩)
+    // 전체목록(12개씩)
     const first = async () => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
                 orderBy(isBest ? "viewCount" : "createdAt", "desc"),
-                limit(6)
+                limit(12)
             )
         );
         const newData = querySnapshot.docs.map((doc: any) => ({
@@ -65,7 +65,7 @@ const SearchData: NextPage = () => {
                 collection(dbService, "recipe"),
                 orderBy(isBest ? "viewCount" : "createdAt", "desc"),
                 startAfter(pageParam),
-                limit(6)
+                limit(12)
             )
         );
         const newData = querySnapshot.docs.map((doc: any) => ({
@@ -76,7 +76,7 @@ const SearchData: NextPage = () => {
         return querySnapshot;
     };
     // InfiniteQuery
-    const { isLoading, isError, error, fetchNextPage, hasNextPage, refetch } =
+    const { isLoading, isError, error, fetchNextPage, hasNextPage } =
         useInfiniteQuery<any, Error>(
             ["infiniteRecipe", isBest],
             async ({ pageParam }) =>
@@ -85,10 +85,7 @@ const SearchData: NextPage = () => {
                 getNextPageParam: (querySnapshot) => {
                     const lastPageParam =
                         querySnapshot.docs[querySnapshot.docs.length - 1];
-                    if (querySnapshot.size < 6) {
-                        return undefined;
-                    }
-                    return lastPageParam;
+                    return querySnapshot.size < 12 ? undefined : lastPageParam;
                 },
                 refetchOnWindowFocus: false,
             }
@@ -194,16 +191,15 @@ const SearchData: NextPage = () => {
             setIsBest(false);
         }
         storeSearchText && setText(storeSearchText);
+        !storeSearchText && setText("");
         storeFilteredFood && setFilteredFood(storeFilteredFood);
         storeFilteredTime && setFilteredTime(storeFilteredTime);
-        !storeSearchText && setText("");
         getList();
     }, [isBest]);
 
     if (isLoading) {
         return <span>Loading...</span>;
     }
-
     if (isError) {
         return <span>Error : {error.message}</span>;
     }

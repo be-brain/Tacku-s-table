@@ -16,36 +16,33 @@ import RecipeList from "@/components/searchPage/RecipeList";
 import ChangeSortedBtn from "@/components/searchPage/ChangeSortedBtn";
 import SearchTextBar from "@/components/searchPage/SearchTextBar";
 import Seo from "../../components/layout/Seo";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 // 카테고리별 불러오기
 const ClassifiedRecipe: NextPage = () => {
     const router = useRouter();
     const [text, setText] = useState("");
-    const [isBest, setIsBest] = useState("");
+    const [isBest, setIsBest] = useState(false);
     const [currentItems, setCurrentItems] = useState<TypeRecipe[]>([]);
     const [totalItems, setTotalItems] = useState<TypeRecipe[]>([]);
-    const [lastDoc, setLastdoc] = useState(0);
 
     // 인기순
     const activeBestBtn = () => {
         sessionStorage.setItem("userWatching", "viewCount");
-        setIsBest("viewCount");
+        setIsBest(true);
     };
 
     // 최신순
     const inactiveBestBtn = () => {
         sessionStorage.setItem("userWatching", "createdAt");
-        setIsBest("createdAt");
+        setIsBest(false);
     };
-    // 전체목록(6개씩)
+    // 전체목록(12개씩)
     const first = async () => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
-                orderBy(
-                    isBest === "viewCount" ? "viewCount" : "createdAt",
-                    "desc"
-                ),
+                orderBy(isBest ? "viewCount" : "createdAt", "desc"),
                 where(
                     `${
                         router.query.category === "15분이하" ||
@@ -58,7 +55,7 @@ const ClassifiedRecipe: NextPage = () => {
                     "==",
                     `${router.query.category}`
                 ),
-                limit(6)
+                limit(12)
             )
         );
         const newData = querySnapshot.docs.map((doc: any) => ({
@@ -66,27 +63,14 @@ const ClassifiedRecipe: NextPage = () => {
             id: doc.id,
         }));
         setTotalItems(newData);
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        lastDoc ? setLastdoc(lastDoc as any) : null;
-    };
-    const updateState = (querySnapshot: any) => {
-        const newData = querySnapshot.docs.map((doc: any) => ({
-            ...doc.data(),
-            id: doc.id,
-        }));
-        const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        setTotalItems((prev) => [...prev, ...newData]);
-        setLastdoc(lastDoc);
+        return querySnapshot;
     };
     // 더보기event
-    const next = async () => {
+    const next = async (pageParam: number) => {
         const querySnapshot = await getDocs(
             query(
                 collection(dbService, "recipe"),
-                orderBy(
-                    isBest === "viewCount" ? "viewCount" : "createdAt",
-                    "desc"
-                ),
+                orderBy(isBest ? "viewCount" : "createdAt", "desc"),
                 where(
                     `${
                         router.query.category === "15분이하" ||
@@ -99,18 +83,38 @@ const ClassifiedRecipe: NextPage = () => {
                     "==",
                     `${router.query.category}`
                 ),
-                startAfter(lastDoc),
-                limit(6)
+                startAfter(pageParam),
+                limit(12)
             )
         );
-        updateState(querySnapshot);
+        const newData = querySnapshot.docs.map((doc: any) => ({
+            ...doc.data(),
+            id: doc.id,
+        }));
+        setTotalItems((prev) => [...prev, ...newData]);
+        return querySnapshot;
     };
+    // InfiniteQuery
+    const { isLoading, isError, error, fetchNextPage, hasNextPage } =
+        useInfiniteQuery<any, Error>(
+            ["infiniteClassifiedRecipe", isBest],
+            async ({ pageParam }) =>
+                await (pageParam ? next(pageParam) : first()),
+            {
+                getNextPageParam: (querySnapshot) => {
+                    const lastPageParam =
+                        querySnapshot.docs[querySnapshot.docs.length - 1];
+                    return querySnapshot.size < 12 ? undefined : lastPageParam;
+                },
+                refetchOnWindowFocus: false,
+            }
+        );
 
     // 목록불러오기
     const getList = async () => {
         const items = query(
             collection(dbService, "recipe"),
-            orderBy(isBest === "viewCount" ? "viewCount" : "createdAt", "desc"),
+            orderBy(isBest ? "viewCount" : "createdAt", "desc"),
             where(
                 `${
                     router.query.category === "15분이하" ||
@@ -158,12 +162,23 @@ const ClassifiedRecipe: NextPage = () => {
     useEffect(() => {
         const result = sessionStorage.getItem("userWatching");
         const storeSearchText = sessionStorage.getItem("searchData");
-        result ? setIsBest(result) : setIsBest("createdAt");
+        if (result === "viewCount") {
+            setIsBest(true);
+        } else {
+            setIsBest(false);
+        }
         storeSearchText && setText(storeSearchText);
         !storeSearchText && setText("");
-        first();
         getList();
     }, [router.query.category, isBest]);
+
+    if (isLoading) {
+        return <span>Loading...</span>;
+    }
+
+    if (isError) {
+        return <span>Error : {error.message}</span>;
+    }
 
     return (
         <div className="w-full flex flex-col justify-center items-center">
@@ -182,15 +197,15 @@ const ClassifiedRecipe: NextPage = () => {
                 <div className="bg-mono30 rounded-sm w-full md:w-1/5 h-9 px-6 mr-7 mb-7 flex justify-center items-center text-sm text-brand100">
                     {router.query.category?.toString().replaceAll("&", "/")}
                 </div>
-                <div className="w-full md:w-4/5 grid mx-auto sm:grid-cols-2 lg:grid-cols-2 lg:mx-0 xl:grid-cols-3 xl:mx-0 2xl:mx-0 gap-x-7 gap-y-9 relative pb-24">
+                <div className="w-full">
                     <RecipeList
                         text={text}
-                        next={next}
-                        lastDoc={lastDoc}
                         currentItems={currentItems}
                         totalItems={totalItems}
                         dataResults={dataResults}
                         isBest={isBest}
+                        fetchNextPage={fetchNextPage}
+                        hasNextPage={hasNextPage}
                     />
                 </div>
             </div>
