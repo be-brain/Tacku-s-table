@@ -21,6 +21,7 @@ const RecipeList = ({
     const filteredFoodAndTime = filteredFood?.length && filteredTime?.length;
     const filteredOnlyFood = filteredFood?.length;
     const filteredOnlyTime = filteredTime?.length;
+    console.log(totalItems);
 
     return (
         <>

@@ -76,7 +76,7 @@ const SearchData: NextPage = () => {
         return querySnapshot;
     };
     // InfiniteQuery
-    const { isLoading, isError, error, fetchNextPage, hasNextPage, refetch } =
+    const { isLoading, isError, error, fetchNextPage, hasNextPage } =
         useInfiniteQuery<any, Error>(
             ["infiniteRecipe", isBest],
             async ({ pageParam }) =>
@@ -85,10 +85,7 @@ const SearchData: NextPage = () => {
                 getNextPageParam: (querySnapshot) => {
                     const lastPageParam =
                         querySnapshot.docs[querySnapshot.docs.length - 1];
-                    if (querySnapshot.size < 6) {
-                        return undefined;
-                    }
-                    return lastPageParam;
+                    return querySnapshot.size < 6 ? undefined : lastPageParam;
                 },
                 refetchOnWindowFocus: false,
             }
@@ -194,16 +191,15 @@ const SearchData: NextPage = () => {
             setIsBest(false);
         }
         storeSearchText && setText(storeSearchText);
+        !storeSearchText && setText("");
         storeFilteredFood && setFilteredFood(storeFilteredFood);
         storeFilteredTime && setFilteredTime(storeFilteredTime);
-        !storeSearchText && setText("");
         getList();
     }, [isBest]);
 
     if (isLoading) {
         return <span>Loading...</span>;
     }
-
     if (isError) {
         return <span>Error : {error.message}</span>;
     }
