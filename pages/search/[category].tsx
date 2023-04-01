@@ -37,7 +37,7 @@ const ClassifiedRecipe: NextPage = () => {
         sessionStorage.setItem("userWatching", "createdAt");
         setIsBest(false);
     };
-    // 전체목록(6개씩)
+    // 전체목록(12개씩)
     const first = async () => {
         const querySnapshot = await getDocs(
             query(
@@ -55,7 +55,7 @@ const ClassifiedRecipe: NextPage = () => {
                     "==",
                     `${router.query.category}`
                 ),
-                limit(6)
+                limit(12)
             )
         );
         const newData = querySnapshot.docs.map((doc: any) => ({
@@ -84,7 +84,7 @@ const ClassifiedRecipe: NextPage = () => {
                     `${router.query.category}`
                 ),
                 startAfter(pageParam),
-                limit(6)
+                limit(12)
             )
         );
         const newData = querySnapshot.docs.map((doc: any) => ({
@@ -104,7 +104,7 @@ const ClassifiedRecipe: NextPage = () => {
                 getNextPageParam: (querySnapshot) => {
                     const lastPageParam =
                         querySnapshot.docs[querySnapshot.docs.length - 1];
-                    return querySnapshot.size < 6 ? undefined : lastPageParam;
+                    return querySnapshot.size < 12 ? undefined : lastPageParam;
                 },
                 refetchOnWindowFocus: false,
             }
