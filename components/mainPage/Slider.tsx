@@ -26,19 +26,19 @@ const Slider: NextPage = () => {
     return (
         <div className="w-full text-center h-7 relative overflow-hidden mb-20">
             {cards.map((item, i) => {
-                const indexLeft = mod(index - 1, cards.length);
-                const indexRight = mod(index + 1, cards.length);
+                const indexTop = mod(index - 1, cards.length);
+                const indexBottom = mod(index + 1, cards.length);
 
                 let classN = "";
                 switch (i) {
                     case index:
                         classN = "card";
                         break;
-                    case indexLeft:
+                    case indexTop:
                         classN =
                             "card transform -translate-y-28 transition-all";
                         break;
-                    case indexRight:
+                    case indexBottom:
                         classN = "card transform translate-y-28 transition-all";
                 }
                 return (
